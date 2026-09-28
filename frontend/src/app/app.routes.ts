@@ -3,11 +3,19 @@ import { Routes } from '@angular/router';
 import { adminGuard, authGuard } from './core/auth-guards';
 
 /**
- * TABLE DES ROUTES — quel composant afficher pour quelle URL.
+ * Table des ROUTES = quelle page afficher pour quelle URL.
  *
- * <p>Les gardes (guards) protègent les pages réservées ; le "title" est
- * affiché dans l'onglet du navigateur ; la page admin est chargée en LAZY
- * (loadComponent) : son code n'est téléchargé que si on la visite.</p>
+ * Exemples :
+ *   /home      → composant Home
+ *   /login     → composant Login
+ *   /users     → composant Users (seulement si connecté ET admin)
+ *
+ * Vocabulaire :
+ * - "loadComponent" = chargement PARESSEUX (lazy) : le fichier de la page
+ *   n'est téléchargé que quand on visite l'URL. L'app démarre plus vite.
+ * - "canActivate" = GARDE : une fonction qui dit oui/non avant d'ouvrir la page.
+ * - "title" = texte de l'onglet du navigateur.
+ * - path: '**' = "n'importe quelle autre URL" (filet 404) → on renvoie à l'accueil.
  */
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'home' },
@@ -37,6 +45,5 @@ export const routes: Routes = [
     title: 'Accès refusé — Enterprise',
     loadComponent: () => import('./features/forbidden/forbidden').then(m => m.Forbidden),
   },
-  // Route fourre-tout : URL inconnue → page 404.
   { path: '**', redirectTo: 'home' },
 ];

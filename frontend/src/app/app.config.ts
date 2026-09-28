@@ -7,19 +7,15 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/auth-interceptor';
 
 /**
- * CONFIGURATION GLOBALE de l'application — la liste des "providers",
- * c'est-à-dire des services/outils mis à disposition de toute l'app.
+ * Configuration GLOBALE : la liste des outils disponibles partout dans l'app.
  *
- * <ul>
- *   <li>{@code provideZonelessChangeDetection()} : la détection de changements
- *       SANS Zone.js, basée sur les signals — plus rapide, recommandée par
- *       Angular (défaut sur les nouveaux projets) ;</li>
- *   <li>{@code provideRouter(...)} : le routeur + transition animée entre
- *       pages + liaison des params d'URL vers les inputs de composant ;</li>
- *   <li>{@code provideHttpClient(withInterceptors(...))} : HttpClient avec
- *       notre intercepteur JWT ;</li>
- *   <li>{@code provideAnimationsAsync()} : animations Angular Material.</li>
- * </ul>
+ * Vocabulaire :
+ * - "provider" = un service enregistré une fois, réutilisable partout
+ *   (ex. HttpClient pour appeler l'API Java).
+ * - "zoneless" = Angular 16+ n'utilise plus Zone.js pour détecter les
+ *   changements d'écran. Il s'appuie sur les signals (voir auth-store.ts).
+ * - "intercepteur HTTP" = un filtre qui s'exécute sur chaque appel API
+ *   (ici : coller le token JWT, voir auth-interceptor.ts).
  */
 export const appConfig: ApplicationConfig = {
   providers: [

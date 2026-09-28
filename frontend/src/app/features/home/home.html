@@ -1,5 +1,4 @@
 <div class="grid">
-  <!-- Carte session -->
   <mat-card class="card">
     <mat-card-header>
       <mat-icon mat-card-avatar>account_circle</mat-icon>
@@ -14,6 +13,7 @@
         </p>
         <p>
           Rôles :
+          <!-- track role = Angular identifie chaque puce (évite de tout recréer). -->
           @for (role of roles(); track role) {
             <mat-chip-option [selected]="true">{{ role }}</mat-chip-option>
           }
@@ -25,13 +25,13 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- Carte santé de l'API -->
   <mat-card class="card">
     <mat-card-header>
       <mat-icon mat-card-avatar>monitor_heart</mat-icon>
       <mat-card-title>Santé de l'API</mat-card-title>
       <mat-card-subtitle>
         @if (lastCheck(); as when) {
+          <!-- Le pipe date transforme un objet Date en texte lisible. -->
           Dernière vérification : {{ when | date:'HH:mm:ss' }}
         } @else {
           Vérification en cours…

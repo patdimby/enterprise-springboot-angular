@@ -13,15 +13,19 @@ import { AuthApi } from '../../core/auth-api';
 import { AuthStore } from '../../core/auth-store';
 
 /**
- * PAGE DE CONNEXION — formulaire réactif (ReactiveForms) + Material.
+ * Page de CONNEXION.
  *
- * <p>Flux : validation locale (email bien formé, champ non vide) → appel
- * POST /api/auth/login via AuthApi → si OK, la session (token + profil)
- * est rangée dans AuthStore (signal + localStorage) → redirection vers la
- * page demandée avant le login (returnUrl) ou l'accueil.</p>
+ * Formulaire RÉACTIF (Reactive Forms) :
+ * - on décrit les champs et les règles EN TypeScript (pas dans le HTML) ;
+ * - le HTML est relié via [formGroup] et formControlName.
  *
- * <p>Les erreurs du backend (401 mauvais mot de passe, réseau indisponible…)
- * sont affichées sous le bouton, jamais de blocage silencieux.</p>
+ * Parcours :
+ * 1. L'utilisateur clique sur "Se connecter".
+ * 2. Si le formulaire est invalide, on marque les champs "touchés"
+ *    pour afficher les messages d'erreur Material.
+ * 3. Sinon POST /api/auth/login.
+ * 4. Succès → AuthStore.setSession (token + profil) → on navigue vers
+ *    returnUrl (la page demandée avant le login) ou /home.
  */
 @Component({
   imports: [
@@ -43,25 +47,19 @@ export class Login {
   private readonly authApi = inject(AuthApi);
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
+  // ActivatedRoute = infos sur l'URL actuelle (ex. ?returnUrl=/users).
   private readonly route = inject(ActivatedRoute);
 
-  /** Formulaire : email + mot de passe, avec règles de validation. */
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
   });
 
-  /** Masque/affiche le mot de passe (icône œil). */
   protected readonly hidePassword = signal(true);
-
-  /** Vrai pendant l'appel HTTP → le bouton affiche un spinner. */
   protected readonly loading = signal(false);
-
-  /** Message d'erreur à afficher (401, réseau…). */
   protected readonly error = signal<string | null>(null);
 
   protected submit(): void {
-    // Formulaire invalide → on montre les erreurs de champ et on s'arrête.
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -70,10 +68,10 @@ export class Login {
     this.loading.set(true);
     this.error.set(null);
 
+    // getRawValue() = { email, password } même si un champ est disabled.
     this.authApi.login(this.form.getRawValue()).subscribe({
       next: session => {
-        this.auth.setSession(session); // mémorise le token + le profil
-        // returnUrl = la page qu'on voulait visiter avant d'être renvoyé ici.
+        this.auth.setSession(session);
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/home';
         this.router.navigateByUrl(returnUrl);
       },
@@ -84,7 +82,7 @@ export class Login {
     });
   }
 
-  /** Traduit l'erreur HTTP en phrase compréhensible pour l'utilisateur. */
+  /** Transforme un code HTTP en phrase lisible. */
   private humanMessage(err: HttpErrorResponse): string {
     if (err.status === 0) {
       return 'Impossible de joindre le serveur. Le backend est-il démarré ?';
@@ -92,7 +90,6 @@ export class Login {
     if (err.status === 401) {
       return 'Email ou mot de passe incorrect.';
     }
-    // Le backend renvoie du RFC 7807 avec un champ "detail".
     return err.error?.detail ?? 'Erreur inattendue. Réessayez.';
   }
 }

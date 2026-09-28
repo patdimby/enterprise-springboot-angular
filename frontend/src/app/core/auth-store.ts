@@ -5,49 +5,53 @@ import { LoginResponse } from './models';
 const STORAGE_KEY = 'enterprise.auth';
 
 /**
- * ÉTAT D'AUTHENTIFICATION — le cœur de la session côté navigateur.
+ * Mémoire de la SESSION dans le navigateur.
  *
- * <p><b>Pourquoi des signals ?</b> C'est le système d'état réactif d'Angular
- * moderne : quand {@link currentUser} change, tous les composants qui le
- * lisent se redessinent tout seuls (et l'app est "zoneless", donc c'est LA
- * façon de déclencher le change detection).</p>
+ * Pourquoi un @Injectable({ providedIn: 'root' }) ?
+ * → Angular crée UN SEUL AuthStore pour toute l'app (singleton).
+ *   Login, toolbar, gardes de routes lisent TOUS le même objet.
  *
- * <p><b>Pourquoi localStorage ?</b> Pour rester connecté après un
- * rafraîchissement de page (F5). Simple et suffisant pour ce projet ;
- * en production on préférerait des cookies httpOnly + refresh tokens.</p>
+ * Pourquoi un signal ?
+ * → Quand currentUser change (login / logout), tous les écrans qui le
+ *   lisent se mettent à jour tout seuls.
+ *
+ * Pourquoi localStorage ?
+ * → F5 ne déconnecte pas. En production, un cookie httpOnly + refresh
+ *   token serait plus sûr (le JWT ne serait plus lisible en JavaScript).
  */
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
-  /** L'utilisateur connecté (ou null). Signal privé : on le modifie via les méthodes. */
+  // Signal PRIVÉ : on ne le modifie que via setSession / logout.
   private readonly _user = signal<LoginResponse | null>(this.readFromStorage());
 
-  /** Lecture publique réactive : les templates et guards l'utilisent. */
+  /** Version LECTURE SEULE pour les templates et les gardes. */
   readonly currentUser = this._user.asReadonly();
 
-  /** Valeurs dérivées, recalculées automatiquement quand _user change. */
+  /** true si quelqu'un est connecté. Recalculé dès que _user change. */
   readonly isLoggedIn = computed(() => this._user() !== null);
   readonly roles = computed(() => this._user()?.roles ?? []);
   readonly isAdmin = computed(() => this.roles().includes('ADMIN'));
 
-  /** Mémorise la session (signal + localStorage). */
+  /** Après un login réussi : on mémorise le token + le profil. */
   setSession(session: LoginResponse): void {
     this._user.set(session);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
   }
 
-  /** Déconnexion : on efface partout. */
+  /** Déconnexion : on efface le signal ET le disque du navigateur. */
   logout(): void {
     this._user.set(null);
     localStorage.removeItem(STORAGE_KEY);
   }
 
-  /** Au démarrage du service : restaure la session d'une exécution précédente. */
+  /** Au premier chargement : on tente de restaurer la session d'hier. */
   private readFromStorage(): LoginResponse | null {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? (JSON.parse(raw) as LoginResponse) : null;
     } catch {
-      return null; // JSON corrompu → on repart de zéro, sans planter l'app.
+      // JSON cassé → on ignore, l'app démarre déconnectée au lieu de planter.
+      return null;
     }
   }
 }

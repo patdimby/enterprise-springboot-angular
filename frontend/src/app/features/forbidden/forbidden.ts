@@ -4,9 +4,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 
 /**
- * PAGE "ACCÈS REFUSÉ" — affichée quand un utilisateur connecté tente
- * d'accéder à une page réservée (ex. /users sans rôle ADMIN).
- * Le garde adminGuard redirige ici.
+ * Page "accès refusé".
+ * adminGuard envoie ici un utilisateur connecté qui n'est pas ADMIN.
+ * Le template est INLINE (dans le .ts) car la page est très petite.
  */
 @Component({
   imports: [RouterLink, MatCardModule, MatIconModule],

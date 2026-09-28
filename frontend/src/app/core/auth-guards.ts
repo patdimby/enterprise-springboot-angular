@@ -4,24 +4,27 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthStore } from './auth-store';
 
 /**
- * GARDES DE ROUTE — les vigies qui décident si une page est accessible.
+ * Gardes de route = vigies AVANT d'ouvrir une page.
  *
- * <p>{@code authGuard} : interdit les pages réservées aux connectés
- * (ex. /users) et renvoie au /login sinon. Le paramètre "returnUrl" permet
- * de revenir à la page demandée APRÈS le login (petit confort).</p>
+ * CanActivateFn = une fonction qui retourne :
+ * - true → "tu peux entrer"
+ * - un UrlTree (createUrlTree) → "va plutôt sur cette autre URL"
  *
- * <p>{@code adminGuard} : en plus d'être connecté, il faut le rôle ADMIN
- * pour /users (le backend le re-vérifie de toute façon : la garde est un
- * confort UX, la SÉCURITÉ reste côté serveur — règle d'or).</p>
+ * authGuard : il faut être connecté. Sinon → /login, avec returnUrl
+ * pour revenir ici après le mot de passe.
+ *
+ * adminGuard : il faut le rôle ADMIN. Sinon → /forbidden.
+ *
+ * Règle d'or : une garde Angular est un CONFORT (UX). La VRAIE sécurité
+ * est dans Spring Security (un USER qui appelle /api/users reçoit 403).
  */
-export const authGuard: CanActivateFn = (route, state) => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthStore);
   const router = inject(Router);
 
   if (auth.isLoggedIn()) {
-    return true; // Connecté : on passe.
+    return true;
   }
-  // Pas connecté : on note la page souhaitée puis on redirige.
   return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
 };
 
@@ -30,8 +33,7 @@ export const adminGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (auth.isAdmin()) {
-    return true; // ADMIN : on passe.
+    return true;
   }
-  // Connecté mais pas admin → page "interdit" maison.
   return router.createUrlTree(['/forbidden']);
 };

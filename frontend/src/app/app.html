@@ -1,7 +1,14 @@
-<!-- Coquille applicative : toolbar + sidenav + contenu routé -->
+<!--
+  Syntaxe Angular dans ce fichier (à retenir) :
+  - [propriété]="valeur"  → on ENVOIE une valeur du TS vers le HTML
+  - (événement)="action"  → on RÉAGIT à un clic, un changement, etc.
+  - {{ expression }}      → on AFFICHE du texte
+  - @if (condition) { }   → afficher un bloc seulement si c'est vrai
+  - routerLink="/home"    → changer d'URL SANS recharger toute la page
+-->
 <mat-sidenav-container class="shell">
 
-  <!-- ------- Menu latéral ------- -->
+  <!-- Menu de gauche -->
   <mat-sidenav
     [mode]="isHandset() ? 'over' : 'side'"
     [opened]="sidenavOpen()"
@@ -9,12 +16,12 @@
     class="shell-nav"
   >
     <mat-nav-list>
-      <!-- Chaque lien est visible seulement si pertinent : -->
       <a mat-list-item routerLink="/home">
         <mat-icon iconPositionEnd>home</mat-icon>
         <span>Accueil</span>
       </a>
 
+      <!-- "as u" = on range l'utilisateur dans une variable locale u -->
       @if (user(); as u) {
         <a mat-list-item routerLink="/home">
           <mat-icon iconPositionEnd>badge</mat-icon>
@@ -22,7 +29,7 @@
         </a>
       }
 
-      <!-- Page d'administration : ADMIN uniquement (le guard re-vérifie). -->
+      <!-- Le lien admin est caché, MAIS la vraie sécurité est côté Java. -->
       @if (isAdmin()) {
         <a mat-list-item routerLink="/users">
           <mat-icon iconPositionEnd>group</mat-icon>
@@ -32,7 +39,6 @@
     </mat-nav-list>
   </mat-sidenav>
 
-  <!-- ------- Zone principale ------- -->
   <mat-sidenav-content class="shell-content">
     <mat-toolbar color="primary" class="shell-toolbar">
       <button
@@ -46,7 +52,6 @@
       <span class="shell-title">Enterprise</span>
       <span class="spacer"></span>
 
-      <!-- Bascule thème clair/sombre -->
       <button
         mat-icon-button
         (click)="toggleDarkMode()"
@@ -57,11 +62,11 @@
       </button>
 
       @if (user(); as u) {
-        <!-- Menu utilisateur : nom + rôles + déconnexion -->
         <button mat-button [matMenuTriggerFor]="userMenu" class="user-chip">
           <mat-icon>account_circle</mat-icon>
           {{ u.fullName }}
         </button>
+        <!-- #userMenu = un "nom local" pour relier le bouton au menu -->
         <mat-menu #userMenu="matMenu">
           <div mat-menu-content class="user-menu-header">
             <strong>{{ u.email }}</strong>
@@ -73,13 +78,12 @@
           </button>
         </mat-menu>
       } @else {
-        <!-- Non connecté : liens vers connexion / inscription -->
         <a mat-button routerLink="/login">Connexion</a>
         <a mat-button routerLink="/register">Inscription</a>
       }
     </mat-toolbar>
 
-    <!-- ICI s'affiche la page courante (Home, Login, Users...) -->
+    <!-- ICI Angular affiche Home, Login, Users... selon l'URL. -->
     <main class="page">
       <router-outlet />
     </main>

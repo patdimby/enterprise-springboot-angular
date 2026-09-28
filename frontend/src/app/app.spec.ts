@@ -7,12 +7,10 @@ import { App } from './app';
 import { AuthStore } from './core/auth-store';
 
 /**
- * TESTS UNITAIRES du composant racine (la coquille de l'app).
- *
- * <p>Chaque test configure un module de test minimal : routeur factice,
- * HttpClient simulé (aucune vraie requête ne part), AuthStore réel (léger,
- * basé sur localStorage de jsdom). On vérifie l'affichage conditionnel
- * selon l'état de session.</p>
+ * Tests du composant racine.
+ * TestBed = mini application Angular factice (pas de vrai serveur).
+ * provideHttpClientTesting() intercepte les appels HTTP pour qu'ils
+ * n'aillent jamais sur le réseau.
  */
 describe('App (coquille applicative)', () => {
   beforeEach(async () => {

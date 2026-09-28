@@ -8,19 +8,20 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
+import { switchMap } from 'rxjs/operators';
 
 import { AuthApi } from '../../core/auth-api';
 import { AuthStore } from '../../core/auth-store';
 
 /**
- * PAGE D'INSCRIPTION — crée un compte (rôle USER côté backend), puis
- * connecte automatiquement l'utilisateur (le backend renvoie le token
- * directement au login ; ici on enchaîne register → login pour
- * simplifier l'expérience).
+ * Page d'INSCRIPTION.
  *
- * <p>Le formulaire ajoute une validation "métier" : confirmation du mot de
- * passe (validateur croisé groupConfirm) et longueur ≥ 8 (règle du backend,
- * affichée avant même l'envoi).</p>
+ * Le backend crée le compte (rôle USER) mais ne renvoie PAS de JWT.
+ * Donc après register() on enchaîne avec login() : switchMap évite
+ * d'imbriquer deux .subscribe() (anti-pattern RxJS : "callback hell").
+ *
+ * Le validateur passwordsMatch compare DEUX champs : il se pose sur le
+ * GROUPE (tout le formulaire), pas sur un champ isolé.
  */
 @Component({
   imports: [
@@ -50,7 +51,6 @@ export class Register {
       password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
       confirm: ['', [Validators.required]],
     },
-    // Validateur de GROUPE : compare deux champs entre eux.
     { validators: passwordsMatch },
   );
 
@@ -68,41 +68,32 @@ export class Register {
     this.loading.set(true);
     this.error.set(null);
 
-    // 1) Création du compte…
-    this.authApi.register({ fullName, email, password }).subscribe({
-      next: () => {
-        // 2) … puis connexion immédiate avec les mêmes identifiants.
-        this.authApi.login({ email, password }).subscribe({
-          next: session => {
-            this.auth.setSession(session);
-            this.router.navigateByUrl('/home');
-          },
-          error: err => {
-            // Cas improbable : compte créé mais login raté → on envoie au login.
-            this.loading.set(false);
-            this.router.navigateByUrl('/login');
-          },
-        });
-      },
-      error: (err: HttpErrorResponse) => {
-        this.loading.set(false);
-        if (err.status === 409) {
-          this.error.set('Cet email est déjà utilisé.');
-        } else if (err.status === 400 && err.error?.errors) {
-          // Erreurs de validation serveur champ par champ.
-          const first = Object.values(err.error.errors)[0];
-          this.error.set(String(first));
-        } else if (err.status === 0) {
-          this.error.set('Impossible de joindre le serveur.');
-        } else {
-          this.error.set(err.error?.detail ?? 'Erreur inattendue.');
-        }
-      },
-    });
+    this.authApi
+      .register({ fullName, email, password })
+      .pipe(switchMap(() => this.authApi.login({ email, password })))
+      .subscribe({
+        next: session => {
+          this.auth.setSession(session);
+          this.router.navigateByUrl('/home');
+        },
+        error: (err: HttpErrorResponse) => {
+          this.loading.set(false);
+          if (err.status === 409) {
+            this.error.set('Cet email est déjà utilisé.');
+          } else if (err.status === 400 && err.error?.errors) {
+            const first = Object.values(err.error.errors)[0];
+            this.error.set(String(first));
+          } else if (err.status === 0) {
+            this.error.set('Impossible de joindre le serveur.');
+          } else {
+            this.error.set(err.error?.detail ?? 'Erreur inattendue.');
+          }
+        },
+      });
   }
 }
 
-/** Validateur : password et confirm doivent être identiques. */
+/** null = OK. Un objet { passwordsMismatch: true } = erreur sur le groupe. */
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   const password = group.get('password')?.value;
   const confirm = group.get('confirm')?.value;

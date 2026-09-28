@@ -1,3 +1,5 @@
+<!-- novalidate = on désactive les bulles natives du navigateur :
+     on affiche NOS messages Material à la place. -->
 <div class="auth-wrap">
   <mat-card class="auth-card">
     <mat-card-header>
@@ -7,12 +9,10 @@
     </mat-card-header>
 
     <mat-card-content>
-      <!-- [formGroup] relie le HTML au formulaire TypeScript ;
-           pasvalidateur natif : on désactive la bulle du navigateur
-           pour afficher NOS messages d'erreur Material. -->
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Email</mat-label>
+          <!-- formControlName relie cet input au champ "email" du FormGroup TS. -->
           <input matInput formControlName="email" type="email" autocomplete="email" required />
           <mat-icon matSuffix>mail</mat-icon>
           @if (form.controls.email.hasError('required')) {
@@ -31,7 +31,7 @@
             autocomplete="current-password"
             required
           />
-          <!-- Bouton œil : afficher/masquer -->
+          <!-- type="button" : sans ça, le bouton œil SOUMETTRAIT le formulaire. -->
           <button
             type="button"
             mat-icon-button
@@ -50,12 +50,7 @@
           <mat-error class="form-error">{{ message }}</mat-error>
         }
 
-        <button
-          matButton="filled"
-          type="submit"
-          class="full-width"
-          [disabled]="loading()"
-        >
+        <button matButton="filled" type="submit" class="full-width" [disabled]="loading()">
           @if (loading()) {
             <mat-spinner diameter="20" />
           } @else {

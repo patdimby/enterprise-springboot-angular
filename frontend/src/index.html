@@ -1,9 +1,16 @@
+<!--
+  Page HTML unique de l'application (SPA = Single Page Application).
+  Angular ne change pas de fichier HTML : il remplace le contenu de <app-root>
+  selon l'URL (home, login, users...).
+-->
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>Frontend</title>
+    <title>Enterprise</title>
+    <!-- Toutes les URLs relatives partent de la racine du site. -->
     <base href="/" />
+    <!-- Affichage correct sur téléphone (pas de zoom trop petit). -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,12 +19,14 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
       rel="stylesheet"
     />
+    <!-- Icônes Material (home, menu, login...) utilisées dans les templates. -->
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined"
       rel="stylesheet"
     />
   </head>
   <body>
+    <!-- Angular insère ici toute l'interface (voir app.ts / app.html). -->
     <app-root></app-root>
   </body>
 </html>
