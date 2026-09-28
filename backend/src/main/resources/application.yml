@@ -1,35 +1,60 @@
+# =====================================================================
+# Configuration COMMUNE à tous les profils (dev, test, prod, docker).
+# Chaque fichier application-<profil>.yml ne surcharge que ce qui change.
+# Le profil actif se choisit avec :
+#   - mvn spring-boot:run -Dspring-boot.run.profiles=dev
+#   - ou variable d'environnement SPRING_PROFILES_ACTIVE=dev
+# Si aucun profil n'est actif, Spring Boot applique automatiquement "dev".
+# =====================================================================
 spring:
   application:
     name: enterprise-backend
-  datasource:
-    url: jdbc:mysql://localhost:3306/enterprise_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: ${MYSQL_USER:enterprise}
-    password: ${MYSQL_PASSWORD:enterprise}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+  # ---------------------------------------------------------------
+  # Profil par défaut : si rien n'est précisé au démarrage,
+  # Spring utilise les réglages du fichier application-dev.yml.
+  # ---------------------------------------------------------------
+  profiles:
+    default: dev
+
   jpa:
-    hibernate:
-      ddl-auto: update
+    # false = ne garde pas une connexion BD ouverte pendant le rendu HTML.
+    # Bonne pratique pour une API REST stateless (et évite les fuites de connexions).
     open-in-view: false
     properties:
       hibernate:
+        # Affiche les requêtes SQL joliment formatées dans la console.
         format_sql: true
+
+  # ---------------------------------------------------------------
+  # Migrations de schéma : désactivées pour l'instant (phase 1).
+  # Le schéma est créé par Hibernate (ddl-auto défini dans chaque profil).
+  # Phase 2 : mettre enabled: true et poser les scripts dans db/migration/.
+  # ---------------------------------------------------------------
   flyway:
     enabled: false
 
 server:
+  # Port HTTP de l'API.
   port: 8080
   error:
+    # Inclure le message d'erreur dans les réponses (pratique en dev ;
+    # à désactiver dans application-prod.yml si besoin).
     include-message: always
 
 springdoc:
   swagger-ui:
+    # Interface Swagger : http://localhost:8080/swagger-ui.html
     path: /swagger-ui.html
 
 app:
+  # ---------------------------------------------------------------
+  # Secret JWT : la valeur par défaut n'est utile qu'en local.
+  # ${VAR:fallback} signifie "utilise la variable d'environnement VAR
+  # si elle existe, sinon le fallback". En prod, APP_JWT_SECRET
+  # est TOUJOURS défini (voir application-prod.yml).
+  # ---------------------------------------------------------------
   jwt-secret: ${APP_JWT_SECRET:ZGV2LW9ubHktc2VjcmV0LWRvLW5vdC11c2UtaW4tcHJvZHVjdGlvbi0yNTZiaXRzIQ==}
+  # Durée de vie du token JWT : 24 heures.
   jwt-expiration: 24h
+  # Origines Angular autorisées (CORS) : surchargées dans chaque profil.
   cors-allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:4200}
-
-logging:
-  level:
-    com.enterprise.app: DEBUG

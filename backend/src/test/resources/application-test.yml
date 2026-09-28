@@ -1,0 +1,26 @@
+# =====================================================================
+# Profil "test" — utilisé par `mvn test`.
+# Base H2 EN MÉMOIRE : la base est recréée à chaque lancement puis
+# effacée. Aucun MySQL requis pour tester.
+# Fichier situé dans src/test/resources : il n'est utilisé QUE
+# pendant les tests, jamais au démarrage de l'application.
+# =====================================================================
+spring:
+  datasource:
+    # H2 = base de données légère qui tourne dans la JVM des tests.
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      # "create-drop" = crée le schéma au début des tests,
+      # supprime tout à la fin. Chaque exécution part de zéro.
+      ddl-auto: create-drop
+
+app:
+  # Secret JWT de test (sans valeur : ce n'est pas un vrai secret).
+  jwt-secret: dGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtMjU2Yml0cyEh
+  # Tokens courts : les tests n'ont pas besoin de 24 h.
+  jwt-expiration: 1h

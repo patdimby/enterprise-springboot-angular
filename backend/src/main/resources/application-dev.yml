@@ -1,0 +1,27 @@
+# =====================================================================
+# Profil "dev" — développement local sur la machine du développeur.
+# MySQL tourne en local (via `docker compose up -d mysql` ou installé).
+# C'est le profil PAR DÉFAUT : il s'applique si aucun autre n'est actif.
+# =====================================================================
+spring:
+  datasource:
+    # Adresse de la base MySQL locale.
+    # createDatabaseIfNotExist=true : MySQL crée la base au premier
+    # démarrage si elle n'existe pas encore (pratique pour un débutant).
+    url: jdbc:mysql://localhost:3306/enterprise_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # Identifiants de la base de développement.
+    # ${VAR:fallback} : prend la variable d'environnement si définie, sinon le fallback.
+    username: ${MYSQL_USER:sa}
+    password: ${MYSQL_PASSWORD:Ma$terkey1}
+
+  jpa:
+    hibernate:
+      # "update" = Hibernate crée/met à jour les tables automatiquement.
+      # Pratique en dev ; en prod on utilise Flyway (migrations versionnées).
+      ddl-auto: update
+
+# Logs verbeux en développement : on voit tout ce qui se passe.
+logging:
+  level:
+    com.enterprise.app: DEBUG

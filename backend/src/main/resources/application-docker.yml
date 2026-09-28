@@ -1,8 +1,15 @@
+# =====================================================================
+# Profil "docker" — backend lancé DANS un conteneur Docker
+# (via docker-compose). Dans ce cas "localhost" désignerait le
+# conteneur lui-même : le vrai nom d'hôte de MySQL est "mysql",
+# le nom du service défini dans docker-compose.yml.
+# =====================================================================
 spring:
   datasource:
-    url: jdbc:mysql://mysql:3306/enterprise_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: ${MYSQL_USER:enterprise}
-    password: ${MYSQL_PASSWORD:enterprise}
+    url: jdbc:mysql://mysql:3306/enterprise_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: ${MYSQL_USER:sa}
+    password: ${MYSQL_PASSWORD:Ma$terkey1}
 
 app:
+  # Origines autorisées : le frontend sert l'app sur le port 80 en Docker.
   cors-allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:80}

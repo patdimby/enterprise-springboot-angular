@@ -24,8 +24,11 @@ dist/
 .angular/
 coverage/
 
-# Environnement
+# Environnement — aucun secret sur le disque (voir Infisical, README)
 .env
+.env.local
+.env.*.local
+.env.backup
 
 # Wrapper (les jars du wrapper Maven sont téléchargés automatiquement)
 !.mvn/wrapper/maven-wrapper.properties

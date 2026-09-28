@@ -1,0 +1,46 @@
+# =====================================================================
+# Profil "prod" — production.
+# Aucune valeur par défaut "en clair" ici : TOUT vient de variables
+# d'environnement. Si une variable manque, l'application refuse de
+# démarrer (c'est voulu : mieux vaut un crash au démarrage qu'une
+# fuite de données en production).
+# Activation : SPRING_PROFILES_ACTIVE=prod
+# =====================================================================
+spring:
+  datasource:
+    # URL fournie par l'environnement (Kubernetes, Docker, cloud...).
+    url: ${MYSQL_URL}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+
+  jpa:
+    hibernate:
+      # "validate" = Hibernate vérifie seulement que les entités
+      # correspondent au schéma, sans jamais le modifier.
+      # Le schéma est géré exclusivement par les migrations Flyway.
+      ddl-auto: validate
+    # SQL silencieux en production.
+    properties:
+      hibernate:
+        format_sql: false
+
+  flyway:
+    # Phase 2 : activer ici quand db/migration/V1__*.sql sera créé.
+    enabled: false
+
+app:
+  # Secret JWT obligatoire : générer avec `openssl rand -base64 64`.
+  jwt-secret: ${APP_JWT_SECRET}
+  # Origines du frontend Angular déployé (séparées par des virgules).
+  cors-allowed-origins: ${APP_CORS_ALLOWED_ORIGINS}
+
+# Erreurs minimales : on ne divulgue rien au client.
+server:
+  error:
+    include-message: never
+
+# Logs INFO seulement.
+logging:
+  level:
+    com.enterprise.app: INFO

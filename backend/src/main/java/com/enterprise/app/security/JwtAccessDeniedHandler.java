@@ -12,7 +12,11 @@ import java.io.IOException;
 import java.time.Instant;
 
 /**
- * Renvoie un 403 JSON quand l'utilisateur est authentifié mais sans les droits requis.
+ * Réponse 403 JSON quand l'utilisateur EST authentifié mais n'a pas les
+ * DROITS requis (ex. un USER simple qui appelle /api/users réservé aux ADMIN).
+ *
+ * <p>Différence avec {@link JwtAuthEntryPoint} :
+ * 401 = "inconnu / non connecté" ; 403 = "connecté mais interdit".</p>
  */
 @Component
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {

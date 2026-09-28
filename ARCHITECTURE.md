@@ -49,7 +49,8 @@ enterprise-springboot-angular/
 ├── ARCHITECTURE.md              ← ce document
 ├── README.md
 ├── .gitignore
-├── .env.example                 ← variables docker-compose (copier en .env)
+├── .env.example                 ← liste des clés de secrets (aucune valeur réelle)
+├── .infisical.json              ← (après `infisical init`) lien projet, sans secret
 ├── docker-compose.yml           ← mysql + backend + frontend
 ├── .github/workflows/ci.yml
 │
@@ -70,9 +71,10 @@ enterprise-springboot-angular/
 │       │   ├── common/                     ← (⏳) erreurs, pagination, exceptions
 │       │   └── ...
 │       ├── main/resources/
-│       │   ├── application.yml             ← profil par défaut
-│       │   ├── application-docker.yml      ← profil conteneur
-│       │   ├── application-prod.yml        ← modèle production
+│       │   ├── application.yml             ← commun à tous les profils (défaut : dev)
+│       │   ├── application-dev.yml         ← profil développement (MySQL local sa/Ma$terkey1)
+│       │   ├── application-docker.yml      ← profil conteneur (host mysql)
+│       │   ├── application-prod.yml        ← modèle production (variables d'env)
 │       │   └── db/migration/               ← (⏳) migrations Flyway V1__*.sql
 │       └── test/
 │           ├── java/...                    ← tests @SpringBootTest (H2)
@@ -251,7 +253,12 @@ State NgRx par feature : `state.ts` (interface + `createEntityAdapter`), `action
   - `frontend` ⏳ : image construite par `frontend/Dockerfile` (build `ng build` → nginx),
     `nginx.conf` avec fallback SPA et `proxy_pass /api → backend:8080`.
 - Réseau interne `app-net` ; seules les ports 80 (frontend) et 8080 (backend, dev) sont exposés.
-- `.env.example` : `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, `APP_JWT_SECRET`, …
+- **Secrets : Infisical** — plus aucun `.env` sur le disque. Les variables
+  (`MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `MYSQL_URL`,
+  `APP_JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS`) vivent dans un projet Infisical
+  (environnements Development / Staging / Production) et sont injectées par la CLI :
+  `infisical run --env=dev -- docker compose up --build`. Détails et procédure
+  d'installation : README, section « 🔐 Secrets avec Infisical ».
 
 ---
 
@@ -261,6 +268,11 @@ State NgRx par feature : `state.ts` (interface + `createEntityAdapter`), `action
 1. job **backend** : `actions/setup-java` (Temurin 21, cache Maven) + `mvn verify` ;
 2. job **frontend** ⏳ : Node 20 + `npm ci` + `ng build --configuration production` + tests headless ;
 3. job **docker** : build des images (sans push) pour valider les Dockerfiles.
+4. **Secrets** : les tests CI (`mvn verify`, profil H2) n'ont besoin d'aucun secret.
+   Si un job en exige plus tard, pas de `infisical login` interactif : une *machine
+   identity* en **Universal Auth** (limitée au projet et à l'environnement requis),
+   dont le *client ID* / *client secret* vit dans les *GitHub Actions secrets*.
+   Voir README, section « 🔐 Secrets avec Infisical ».
 
 ---
 

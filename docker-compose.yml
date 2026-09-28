@@ -1,15 +1,38 @@
+# =====================================================================
+# Stack locale (MySQL + backend).
+#
+# Les mots de passe et le secret JWT ne sont PAS stockés ici : lancez
+# Docker Compose via Infisical, qui injecte les variables dans
+# l'environnement du processus avant que Compose ne les lise (${VAR}) :
+#
+#     infisical run --env=dev -- docker compose up --build
+#
+# Les valeurs de repli ci-dessous ne servent qu'au développement local
+# sans Infisical. Voir « 🔐 Secrets avec Infisical » dans le README.
+# =====================================================================
 services:
+  # -----------------------------------------------------------------
+  # Base de données MySQL (8.4).
+  # L'application (profil "docker") s'y connecte avec l'utilisateur
+  # et le mot de passe fournis par Infisical (voir l'en-tête ci-dessus).
+  # -----------------------------------------------------------------
   mysql:
     image: mysql:8.4
     container_name: enterprise-mysql
     environment:
+      # Mot de passe root (administration de la base).
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      # Base créée automatiquement au premier démarrage.
       MYSQL_DATABASE: enterprise_db
-      MYSQL_USER: ${MYSQL_USER:-enterprise}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-enterprise}
+      # Utilisateur applicatif utilisé par le backend Spring Boot.
+      MYSQL_USER: ${MYSQL_USER:-sa}
+      # NB : dans ce fichier compose, un $ littéral s'écrit $$ (sinon Docker
+      # le croit une variable et l'avale). Le mot de passe final est Ma$terkey1.
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-Ma$$terkey1}
     ports:
       - "3306:3306"
     volumes:
+      # Les données survivent aux redémarrages du conteneur.
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD}"]
@@ -18,6 +41,10 @@ services:
       retries: 10
     networks: [app-net]
 
+  # -----------------------------------------------------------------
+  # Backend Spring Boot : construit depuis backend/Dockerfile.
+  # Le profil "docker" est activé via SPRING_PROFILES_ACTIVE.
+  # -----------------------------------------------------------------
   backend:
     build: ./backend
     container_name: enterprise-backend
@@ -26,8 +53,8 @@ services:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      MYSQL_USER: ${MYSQL_USER:-enterprise}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-enterprise}
+      MYSQL_USER: ${MYSQL_USER:-sa}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-Ma$$terkey1}
       APP_JWT_SECRET: ${APP_JWT_SECRET:-ZGV2LW9ubHktc2VjcmV0LWRvLW5vdC11c2UtaW4tcHJvZHVjdGlvbi0yNTZiaXRzIQ==}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:80}
     ports:
