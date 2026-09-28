@@ -12,9 +12,9 @@ Spring Security 7 + JWT, MySQL 8, Flyway, Swagger) et frontend **Angular 20 + Ng
 # 1. Base de données
 docker compose up -d mysql
 
-# 2. Backend (Maven Wrapper — aucune installation requise)
+# 2. Backend (Maven 3.9+ et JDK 21 requis)
 cd backend
-./mvnw spring-boot:run          # Windows : mvnw.cmd spring-boot:run
+mvn spring-boot:run
 ```
 
 - API : http://localhost:8080/api
@@ -45,7 +45,7 @@ docker compose up --build
 
 ```bash
 cd backend
-./mvnw test             # H2 en mémoire, profil "test"
+mvn test                # H2 en mémoire, profil "test"
 ```
 
 ## Structure

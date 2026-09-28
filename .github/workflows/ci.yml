@@ -24,7 +24,7 @@ jobs:
           cache: maven
 
       - name: Build & test
-        run: ./mvnw -B verify
+        run: mvn -B verify
 
   frontend:
     name: Frontend — build & tests

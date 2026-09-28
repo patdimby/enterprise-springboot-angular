@@ -54,7 +54,6 @@ enterprise-springboot-angular/
 ├── .github/workflows/ci.yml
 │
 ├── backend/                                ✔ créé (phase 1)
-│   ├── mvnw, mvnw.cmd, .mvn/wrapper/       ← Maven Wrapper 3.9.16 (aucune install requise)
 │   ├── pom.xml                             ← toutes les dépendances, dernières versions
 │   ├── Dockerfile                          ← multi-stage (build Maven → JRE temurin)
 │   └── src/
@@ -259,7 +258,7 @@ State NgRx par feature : `state.ts` (interface + `createEntityAdapter`), `action
 ## 7. CI GitHub Actions
 
 `.github/workflows/ci.yml` : sur `push`/`pull_request` →
-1. job **backend** : `actions/setup-java` (Temurin 21, cache Maven) + `mvnw verify` ;
+1. job **backend** : `actions/setup-java` (Temurin 21, cache Maven) + `mvn verify` ;
 2. job **frontend** ⏳ : Node 20 + `npm ci` + `ng build --configuration production` + tests headless ;
 3. job **docker** : build des images (sans push) pour valider les Dockerfiles.
 
@@ -268,7 +267,7 @@ State NgRx par feature : `state.ts` (interface + `createEntityAdapter`), `action
 ## 8. Ordre de construction
 
 1. ✔ **Phase 1 (fait)** : squelette backend — `pom.xml` (dernières versions), config,
-   sécurité JWT, auth, users, gestion d'erreurs, tests, wrapper Maven, Docker, CI.
+   sécurité JWT, auth, users, gestion d'erreurs, tests, Docker, CI.
 2. ⏳ Phase 2 : entités métier (`Project`, `Task`, `Comment`), migrations Flyway,
    endpoints CRUD complets, frontend Angular 20 + NgRx.
 3. ⏳ Phase 3 : dashboard, rafinements (refresh tokens, pagination généralisée, Docker push GHCR).
