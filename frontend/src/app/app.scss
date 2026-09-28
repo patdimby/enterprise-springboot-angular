@@ -1,0 +1,55 @@
+// Coquille de l'application : plein écran, sidenav + toolbar + contenu.
+.shell {
+  height: 100dvh; // 100% de la hauteur "dynamique" du navigateur (mobile friendly)
+}
+
+.shell-nav {
+  width: 240px;
+  padding-top: 8px;
+}
+
+.shell-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.shell-toolbar {
+  position: sticky; // reste visible quand on fait défiler
+  top: 0;
+  z-index: 10;
+  gap: 4px;
+}
+
+.shell-title {
+  font: var(--mat-sys-title-large);
+  margin-right: 8px;
+}
+
+.spacer {
+  flex: 1 1 auto; // pousse tout ce qui suit vers la droite
+}
+
+.user-chip {
+  text-transform: none; // garde la casse du nom
+}
+
+.user-menu-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 16px;
+
+  small {
+    opacity: 0.7;
+  }
+}
+
+// Zone de contenu des pages : centrée, responsive.
+.page {
+  flex: 1 1 auto;
+  width: min(1100px, 100% - 2rem); // au max 1100px, sinon -2rem de marges
+  margin: 0 auto;
+  padding: 1.5rem 0 3rem;
+  box-sizing: border-box;
+}

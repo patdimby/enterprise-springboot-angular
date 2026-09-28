@@ -44,3 +44,11 @@ server:
 logging:
   level:
     com.enterprise.app: INFO
+
+# Supervision : détails du health check masqués publiquement (on ne
+# divulgue rien — nom de la base, disques, etc. — à un inconnu).
+management:
+  endpoint:
+    health:
+      show-details: never
+      show-components: never

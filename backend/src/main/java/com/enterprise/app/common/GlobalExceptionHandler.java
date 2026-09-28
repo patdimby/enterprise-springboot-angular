@@ -2,6 +2,7 @@ package com.enterprise.app.common;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -58,6 +59,16 @@ public class GlobalExceptionHandler {
                         fe -> fe.getDefaultMessage() == null ? "invalide" : fe.getDefaultMessage(),
                         (a, b) -> a)));
         return pd;
+    }
+
+    /**
+     * Corps de requête ILLISIBLE : JSON mal formé, type de contenu incorrect...
+     * C'est la faute du client → 400 (sans le handler, cette exception
+     * tomberait dans le 500 générique, ce qui serait trompeur).
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
+        return base(HttpStatus.BAD_REQUEST.value(), "Corps de requête illisible : JSON invalide ou absent.");
     }
 
     /** Email ou mot de passe incorrect → 401 (sans préciser lequel, par sécurité). */

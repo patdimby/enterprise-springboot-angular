@@ -23,11 +23,11 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Build & test
+      - name: Build & test (unitaires + fonctionnels, H2)
         run: mvn -B verify
 
   frontend:
-    name: Frontend — build & tests
+    name: Frontend — build & tests unitaires
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,28 +35,67 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node 20
+      - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install & build
-        run: |
-          npm ci || echo "frontend pas encore initialisé (phase 2)"
-          npm test -- --watch=false --browsers=ChromeHeadless || echo "aucun test frontend"
+      - name: Install
+        run: npm ci
+
+      - name: Build production
+        run: npm run build
+
+      - name: Unit tests (Vitest)
+        run: npm test -- --watch=false
+
+  e2e:
+    name: E2E — parcours navigateur (Playwright)
+    runs-on: ubuntu-latest
+    needs: [frontend]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run e2e tests
+        # playwright.config démarre `ng serve` (webServer) ; les appels /api
+        # sont interceptés dans les tests : pas besoin du backend Java ici.
+        run: npm run e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
 
   docker:
     name: Docker — build images
     runs-on: ubuntu-latest
-    needs: [backend]
+    needs: [backend, frontend]
     steps:
       - uses: actions/checkout@v4
 
       - name: Build backend image
         run: docker build -t enterprise-backend ./backend
 
-      # Phase 2 : build de l'image frontend Angular
-      # - name: Build frontend image
-      #   run: docker build -t enterprise-frontend ./frontend
+      - name: Build frontend image
+        run: docker build -t enterprise-frontend ./frontend

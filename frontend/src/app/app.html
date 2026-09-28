@@ -1,0 +1,87 @@
+<!-- Coquille applicative : toolbar + sidenav + contenu routé -->
+<mat-sidenav-container class="shell">
+
+  <!-- ------- Menu latéral ------- -->
+  <mat-sidenav
+    [mode]="isHandset() ? 'over' : 'side'"
+    [opened]="sidenavOpen()"
+    (click)="onNavNavigate()"
+    class="shell-nav"
+  >
+    <mat-nav-list>
+      <!-- Chaque lien est visible seulement si pertinent : -->
+      <a mat-list-item routerLink="/home">
+        <mat-icon iconPositionEnd>home</mat-icon>
+        <span>Accueil</span>
+      </a>
+
+      @if (user(); as u) {
+        <a mat-list-item routerLink="/home">
+          <mat-icon iconPositionEnd>badge</mat-icon>
+          <span>{{ u.fullName }}</span>
+        </a>
+      }
+
+      <!-- Page d'administration : ADMIN uniquement (le guard re-vérifie). -->
+      @if (isAdmin()) {
+        <a mat-list-item routerLink="/users">
+          <mat-icon iconPositionEnd>group</mat-icon>
+          <span>Utilisateurs</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <!-- ------- Zone principale ------- -->
+  <mat-sidenav-content class="shell-content">
+    <mat-toolbar color="primary" class="shell-toolbar">
+      <button
+        mat-icon-button
+        aria-label="Basculer le menu latéral"
+        (click)="sidenavOpen.set(!sidenavOpen())"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <span class="shell-title">Enterprise</span>
+      <span class="spacer"></span>
+
+      <!-- Bascule thème clair/sombre -->
+      <button
+        mat-icon-button
+        (click)="toggleDarkMode()"
+        [matTooltip]="darkMode() ? 'Thème clair' : 'Thème sombre'"
+        aria-label="Basculer le thème clair/sombre"
+      >
+        <mat-icon>{{ darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+
+      @if (user(); as u) {
+        <!-- Menu utilisateur : nom + rôles + déconnexion -->
+        <button mat-button [matMenuTriggerFor]="userMenu" class="user-chip">
+          <mat-icon>account_circle</mat-icon>
+          {{ u.fullName }}
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <div mat-menu-content class="user-menu-header">
+            <strong>{{ u.email }}</strong>
+            <small>{{ u.roles.join(', ') }}</small>
+          </div>
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Déconnexion</span>
+          </button>
+        </mat-menu>
+      } @else {
+        <!-- Non connecté : liens vers connexion / inscription -->
+        <a mat-button routerLink="/login">Connexion</a>
+        <a mat-button routerLink="/register">Inscription</a>
+      }
+    </mat-toolbar>
+
+    <!-- ICI s'affiche la page courante (Home, Login, Users...) -->
+    <main class="page">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -1,0 +1,72 @@
+<div class="auth-wrap">
+  <mat-card class="auth-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>login</mat-icon>
+      <mat-card-title>Connexion</mat-card-title>
+      <mat-card-subtitle>Accédez à votre espace</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- [formGroup] relie le HTML au formulaire TypeScript ;
+           pasvalidateur natif : on désactive la bulle du navigateur
+           pour afficher NOS messages d'erreur Material. -->
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" autocomplete="email" required />
+          <mat-icon matSuffix>mail</mat-icon>
+          @if (form.controls.email.hasError('required')) {
+            <mat-error>L'email est obligatoire.</mat-error>
+          } @else if (form.controls.email.hasError('email')) {
+            <mat-error>Format d'email invalide.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Mot de passe</mat-label>
+          <input
+            matInput
+            formControlName="password"
+            [type]="hidePassword() ? 'password' : 'text'"
+            autocomplete="current-password"
+            required
+          />
+          <!-- Bouton œil : afficher/masquer -->
+          <button
+            type="button"
+            mat-icon-button
+            matSuffix
+            (click)="hidePassword.set(!hidePassword())"
+            [attr.aria-label]="hidePassword() ? 'Afficher le mot de passe' : 'Masquer le mot de passe'"
+          >
+            <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.controls.password.hasError('required')) {
+            <mat-error>Le mot de passe est obligatoire.</mat-error>
+          }
+        </mat-form-field>
+
+        @if (error(); as message) {
+          <mat-error class="form-error">{{ message }}</mat-error>
+        }
+
+        <button
+          matButton="filled"
+          type="submit"
+          class="full-width"
+          [disabled]="loading()"
+        >
+          @if (loading()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            Se connecter
+          }
+        </button>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <a matButton routerLink="/register">Pas de compte ? S'inscrire</a>
+    </mat-card-actions>
+  </mat-card>
+</div>

@@ -1,5 +1,6 @@
 package com.enterprise.app.security;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Value;
 
@@ -26,9 +27,20 @@ import java.io.Serializable;
  */
 @Value
 @Builder
+@Schema(description = "Identité courte de l'utilisateur, reconstruite depuis les "
+        + "claims du JWT (réponse de GET /api/auth/me). Aucune lecture base : "
+        + "les valeurs viennent uniquement du token.")
 public class UserPrincipal implements Serializable {
 
+    @Schema(description = "Identifiant technique du compte (claim 'id' du JWT).",
+            example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
     Long id;
+
+    @Schema(description = "Email du compte (claim 'sub' du JWT).",
+            example = "admin@enterprise.com", requiredMode = Schema.RequiredMode.REQUIRED)
     String email;
+
+    @Schema(description = "Nom complet (claim 'fullName' du JWT).",
+            example = "Jane Doe", requiredMode = Schema.RequiredMode.REQUIRED)
     String fullName;
 }

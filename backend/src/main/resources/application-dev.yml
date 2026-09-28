@@ -25,3 +25,11 @@ spring:
 logging:
   level:
     com.enterprise.app: DEBUG
+
+# Détails du health check visibles par tout le monde (dev uniquement :
+# en prod ils sont masqués, voir application-prod.yml).
+management:
+  endpoint:
+    health:
+      show-details: always
+      show-components: always

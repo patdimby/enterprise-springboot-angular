@@ -1,0 +1,50 @@
+// Grille responsive : 2 cartes côte à côte sur desktop, empilées sur mobile.
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  margin-bottom: 1rem;
+}
+
+.muted {
+  opacity: 0.7;
+}
+
+.health-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+}
+
+// Point d'état : vert (UP), rouge (DOWN), orange (en cours).
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-ok {
+  background: #2e7d32;
+  box-shadow: 0 0 8px #2e7d32;
+}
+
+.dot-ko {
+  background: #c62828;
+  box-shadow: 0 0 8px #c62828;
+}
+
+.dot-wait {
+  background: #ef6c00;
+  box-shadow: 0 0 8px #ef6c00;
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}

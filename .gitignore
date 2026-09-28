@@ -18,11 +18,16 @@ target/
 .DS_Store
 Thumbs.db
 
-# Node / Angular (phase 2)
+# Node / Angular
 node_modules/
 dist/
 .angular/
 coverage/
+
+# Playwright (e2e)
+test-results/
+playwright-report/
+blob-report/
 
 # Environnement — aucun secret sur le disque (voir Infisical, README)
 .env

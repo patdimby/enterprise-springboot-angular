@@ -1,0 +1,52 @@
+// =====================================================================
+// STYLES GLOBAUX — thème Material 3 + support du mode sombre.
+// =====================================================================
+
+// Import du design system Material (le namespace "mat" est utilisé plus bas).
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  // mat.theme() génère les variables CSS (--mat-sys-*) du design system
+  // Material 3 : couleurs, typographie, arrondis... utilisées partout.
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  // Thème clair par défaut ; la classe .dark-mode ci-dessous inverse.
+  color-scheme: light;
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+  // Transition douce quand on bascule clair ↔ sombre.
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// ---------------------------------------------------------------------
+// MODE SOMBRE — la classe est posée sur <body> par le bouton lune/soleil.
+// color-scheme: dark inverse automatiquement toutes les variables
+// --mat-sys-* (surfaces, textes, composants Material).
+// ---------------------------------------------------------------------
+body.dark-mode {
+  color-scheme: dark;
+}
+
+// Petites classes utilitaires partagées par plusieurs pages.
+.full-width {
+  width: 100%;
+}
+
+.table-card {
+  overflow-x: auto; // le tableau défile horizontalement sur mobile
+}

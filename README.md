@@ -1,8 +1,9 @@
 # enterprise-springboot-angular
 
 Application d'entreprise **gestion de projets** : API REST **Spring Boot 4.1** (Java 21,
-Spring Security 7 + JWT, MySQL 8, Flyway, Swagger) et frontend **Angular 20 + NgRx**
-(en phase 2). Orchestration **Docker Compose**, CI **GitHub Actions**.
+Spring Security 7 + JWT, MySQL 8, Flyway, Swagger) et frontend **Angular 22**
+(Material 3, standalone, zoneless, signals) avec tests **Vitest** + **Playwright**.
+Orchestration **Docker Compose**, CI **GitHub Actions**.
 
 > 📐 Architecture détaillée : [ARCHITECTURE.md](ARCHITECTURE.md)
 
@@ -23,7 +24,48 @@ infisical run --env=dev -- mvn spring-boot:run
 
 - API : http://localhost:8080/api
 - Swagger UI : http://localhost:8080/swagger-ui.html
+- Contrat OpenAPI (JSON) : http://localhost:8080/v3/api-docs
 - Admin seedé au 1er démarrage : `admin@enterprise.com` / `Admin123!`
+
+### Documentation Swagger enrichie
+
+La doc OpenAPI n'est pas une simple liste de routes — chaque endpoint est
+documenté : **résumé, explication détaillée du traitement** (étapes internes,
+règles de sécurité), **paramètres avec exemples et bornes**, **tous les codes
+HTTP possibles** (200/201/204/400/401/403/404/409) et **schémas des DTO** avec
+exemples. Le tout testé par `OpenApiDocsTests` (le contrat est une interface
+publique : s'il régresse, la CI échoue).
+
+Pour l'essayer : ouvrir Swagger UI → bouton **Authorize** → coller un token
+JWT (obtenu via `POST /api/auth/login`, sans le mot "Bearer") → "Try it out".
+
+## Frontend Angular (phase 2 ✔)
+
+```bash
+cd frontend
+npm install
+npm start            # http://localhost:4200 — proxy /api → :8080 (proxy.conf.json)
+```
+
+- **Angular 22** : composants standalone, **zoneless** (change detection par
+  signals), contrôle de flux moderne (`@if`, `@for`), chargement différé des pages.
+- **Angular Material 3** : thème `mat.theme()` avec bascule clair/sombre,
+  sidenav responsive (menu recouvrant sur mobile), toolbar, table, dialog, snackbar.
+- **Pages** : Accueil (avec sonde de santé de l'API), Connexion, Inscription,
+  Administration des utilisateurs (réservée ADMIN : rôles, activation, suppression).
+
+### Tests frontend
+
+```bash
+npm test             # tests unitaires + fonctionnels Vitest (jsdom)
+npm run e2e          # tests e2e Playwright — démarre ng serve tout seul
+```
+
+> Le premier `npm run e2e` télécharge Chromium (~130 Mo) :
+> `npx playwright install chromium` si besoin.
+
+Les tests e2e interceptent les appels `/api/**` : aucun backend requis pour
+valider les parcours (login, redirections, tableau des utilisateurs, 403).
 
 ## Essayer l'API
 
@@ -183,20 +225,35 @@ infisical run --env=dev -- docker compose up --build
 ## Tests
 
 ```bash
-cd backend
-mvn test                # H2 en mémoire, profil "test"
+# Backend : tests unitaires (JwtService, AuthService, UserService,
+# AppProperties), tests fonctionnels MockMvc (API complète) et tests du
+# contrat OpenAPI — H2 en mémoire
+cd backend && mvn test
+
+# Frontend : tests unitaires et fonctionnels (Vitest)
+cd frontend && npm test
+
+# Frontend : tests fonctionnels e2e (Playwright, navigateur réel)
+cd frontend && npm run e2e
 ```
+
+Le backend expose aussi des **sondes de santé** (publiques) :
+
+- `/actuator/health` → `{"status":"UP"}` (utilisé par le healthcheck Docker) ;
+- `/actuator/health/liveness` et `/readiness` (probes Kubernetes/Docker) ;
+- détails complets affichés en dev, masqués en prod (voir `application*.yml`).
 
 ## Structure
 
 ```
 .infisical.json   lien vers le projet Infisical (aucun secret)         ✔ phase 1
 backend/          API Spring Boot 4.1 (auth JWT, users, rôles)         ✔ phase 1
-frontend/         Angular 20 + NgRx                                    ⏳ phase 2
+frontend/         Angular 22 + Material 3 + Vitest + Playwright        ✔ phase 2
 ```
 
 ## Roadmap
 
 - [x] **Phase 1** — Squelette backend : sécurité JWT, auth, users, erreurs RFC 7807, Docker, CI
-- [ ] **Phase 2** — Entités métier (Project, Task, Comment) + migrations Flyway + frontend Angular/NgRx
+- [x] **Phase 2a** — Frontend Angular 22 (Material 3, responsive, tests Vitest + Playwright)
+- [ ] **Phase 2b** — Entités métier (Project, Task, Comment) + migrations Flyway + écrans projets/tâches
 - [ ] **Phase 3** — Dashboard, refresh tokens, publication d'images GHCR

@@ -1,0 +1,28 @@
+// Page admin : tableau scrollable horizontalement sur mobile.
+.users-table {
+  min-width: 760px; // force le scroll plutôt qu'un écrasement des colonnes
+}
+
+.search {
+  width: 220px;
+  margin-left: 1rem;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+mat-chip {
+  font-size: 0.75rem;
+}
+
+// Met en avant le rôle ADMIN.
+.admin-chip {
+  font-weight: 700;
+}

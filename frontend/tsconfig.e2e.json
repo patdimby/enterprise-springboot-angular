@@ -1,0 +1,15 @@
+/* Configuration TypeScript pour les TESTS E2E Playwright (dossier e2e/).
+   Séparé du tsconfig.app.json : le code e2e ne fait pas partie du build. */
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["e2e/**/*.ts", "playwright.config.ts"]
+}

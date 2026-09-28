@@ -61,14 +61,19 @@ services:
       - "8080:8080"
     networks: [app-net]
 
-  # ---- Phase 2 : frontend Angular 20 (décommenter après `ng new frontend`) ----
-  # frontend:
-  #   build: ./frontend
-  #   container_name: enterprise-frontend
-  #   depends_on: [backend]
-  #   ports:
-  #     - "80:80"
-  #   networks: [app-net]
+  # -----------------------------------------------------------------
+  # Frontend Angular : construit depuis frontend/Dockerfile.
+  # nginx sert l'application (port 80) et proxifie /api vers le backend :
+  # le navigateur ne parle qu'à une seule origine (pas de CORS en prod).
+  # -----------------------------------------------------------------
+  frontend:
+    build: ./frontend
+    container_name: enterprise-frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks: [app-net]
 
 volumes:
   mysql_data:

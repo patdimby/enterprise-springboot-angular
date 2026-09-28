@@ -75,9 +75,20 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable : id=" + id));
 
         // Convertit ["USER", "MANAGER"] (textes) en objets Role (entités).
+        // Un nom de rôle inconnu (ex. "SUPERGIRL") ou mal écrit → 400 BAD REQUEST :
+        // on refuse proprement plutôt que de laisser Spring lever une
+        // IllegalArgumentException (qui deviendrait un 500 trompeur).
         Set<Role> newRoles = roles.stream()
-                .map(name -> roleRepository.findByName(RoleName.valueOf(name))
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rôle inconnu : " + name)))
+                .map(name -> {
+                    RoleName roleName;
+                    try {
+                        roleName = RoleName.valueOf(name);
+                    } catch (IllegalArgumentException e) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rôle inconnu : " + name);
+                    }
+                    return roleRepository.findByName(roleName)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rôle inconnu : " + name));
+                })
                 .collect(Collectors.toSet());
 
         user.setRoles(newRoles);

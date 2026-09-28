@@ -46,6 +46,33 @@ springdoc:
     # Interface Swagger : http://localhost:8080/swagger-ui.html
     path: /swagger-ui.html
 
+# =====================================================================
+# SUPERVISION (Actuator) — « sonde de santé » de l'application.
+#
+# /actuator/health       → {"status":"UP"} : tout va bien (ou "DOWN").
+# /actuator/health/liveness  → vivant ? (Kubernetes/Docker le redémarre sinon)
+# /actuator/health/readiness → prêt à recevoir du trafic ?
+# /actuator/info         → infos libres (version, description...).
+#
+# Ces routes sont PUBLIQUES (SecurityConfig) : le healthcheck Docker
+# doit pouvoir les interroger sans token.
+# =====================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        # Endpoints publiés en HTTP (les autres existent en interne).
+        include: health,info
+  endpoint:
+    health:
+      # Force les groupes liveness/readiness même hors Kubernetes.
+      probes:
+        enabled: true
+  health:
+    db:
+      # Le health check « ping » la base : si MySQL tombe, /health dit DOWN.
+      enabled: true
+
 app:
   # ---------------------------------------------------------------
   # Secret JWT : la valeur par défaut n'est utile qu'en local.

@@ -1,8 +1,9 @@
 # Architecture — `enterprise-springboot-angular`
 
 Monorepo d'une application d'entreprise type **gestion de projets**, avec un backend
-**Spring Boot 4.1** (Java 21, Spring Security 7, JWT) et un frontend **Angular 20**
-(NgRx), une base **MySQL 8**, le tout orchestré par **Docker Compose**.
+**Spring Boot 4.1** (Java 21, Spring Security 7, JWT) et un frontend **Angular 22**
+(Material 3, standalone, zoneless, signals), une base **MySQL 8**, le tout orchestré
+par **Docker Compose**.
 
 > Ce document est le plan de construction du dépôt. Chaque section décrit ce qui
 > existe (✔ créé) ou ce qui restera à créer (⏳ phases suivantes).
@@ -32,10 +33,11 @@ Monorepo d'une application d'entreprise type **gestion de projets**, avec un bac
 | Langage | Java | 21 (LTS) |
 | Sécurité | Spring Security 7 + JJWT (jjwt-api/impl/jackson) | 7.0.x / **0.12.6** |
 | Persistance | Spring Data JPA (Hibernate), Flyway, MySQL Connector/J | Boot-managé |
-| API docs | springdoc-openapi (Swagger UI) | **3.1.1** |
+| API docs | springdoc-openapi (Swagger UI) — contrat testé par `OpenApiDocsTests` | **3.1.1** |
 | Mapping | MapStruct + Lombok | **1.6.3** / 1.18.42 |
-| Frontend | Angular (standalone) + Angular Material | 20.x |
-| State | NgRx (store, effects, entity, devtools) | 20.x |
+| Frontend | Angular (standalone, zoneless, signals) + Angular Material 3 | **22.2** |
+| State | Signals Angular (AuthStore) + computed ; NgRx envisagé pour le domaine métier | — |
+| Tests frontend | Vitest (unitaires/fonctionnels, jsdom) + Playwright (e2e) | 5.x / 1.5x |
 | Base de données | MySQL | 8.4 LTS |
 | Conteneurisation | Docker Compose, build multi-stage, Jib-like layering | — |
 | CI | GitHub Actions (build + tests + images) | — |
@@ -80,19 +82,31 @@ enterprise-springboot-angular/
 │           ├── java/...                    ← tests @SpringBootTest (H2)
 │           └── resources/application-test.yml
 │
-├── frontend/                               ⏳ (phase 2 — Angular 20 + NgRx)
-│   ├── package.json, angular.json
+├── frontend/                               ✔ créé (phase 2a — Angular 22)
+│   ├── package.json, angular.json, tsconfig.*.json
+│   ├── proxy.conf.json                     ← dev : /api → http://localhost:8080
+│   ├── playwright.config.ts                ← e2e (démarre ng serve automatiquement)
 │   ├── Dockerfile                          ← build Angular → nginx alpine
 │   ├── nginx.conf                          ← SPA fallback + proxy /api
-│   └── src/app/
-│       ├── core/                           ← interceptors JWT, guards, services API
-│       ├── shared/                         ← composants UI réutilisables
-│       ├── features/
-│       │   ├── auth/                       ← login/register + NgRx auth state
-│       │   ├── projects/                   ← NgRx projects state (entity + effects)
-│       │   ├── tasks/                      ← NgRx tasks state
-│       │   └── dashboard/
-│       └── app.config.ts, app.routes.ts
+│   ├── e2e/                                ← tests fonctionnels e2e Playwright
+│   └── src/
+│       ├── environments/                   ← apiUrl /api (dev : via proxy)
+│       └── app/
+│           ├── app.ts|html|scss            ← coquille : toolbar + sidenav + router
+│           ├── app.config.ts               ← zoneless, http+interceptor, router
+│           ├── app.routes.ts               ← routes lazy-loadées + guards
+│           ├── core/
+│           │   ├── models.ts               ← types TS = DTOs Java (LoginResponse...)
+│           │   ├── auth-store.ts           ← état session (signals + localStorage)
+│           │   ├── auth-interceptor.ts     ← en-tête Bearer + logout auto sur 401
+│           │   ├── auth-guards.ts          ← authGuard, adminGuard
+│           │   ├── auth-api.ts, users-api.ts ← clients HTTP
+│           │   └── *.spec.ts               ← tests unitaires (Vitest)
+│           └── features/
+│               ├── home/                  ← accueil + sonde santé API
+│               ├── auth/                  ← login, register (Reactive Forms)
+│               ├── users/                 ← admin : table, rôles, activation
+│               └── forbidden/             ← page 403 maison
 │
 └── docs/                                   ⏳ (phase 3) screenshots, ADR, guide de contribution
 ```
@@ -206,29 +220,51 @@ depuis les variables d'environnement (`APP_JWT_SECRET`, `APP_JWT_EXPIRATION_MS`,
 
 ---
 
-## 4. Frontend Angular + NgRx ⏳
+## 4. Frontend Angular 22 ✔ (phase 2a)
 
-Angular 20 (standalone, `provideHttpClient(withInterceptors(...))`, `provideRouter`).
+**Stack** : composants standalone, **zoneless** (`provideZonelessChangeDetection`),
+state par **signals**, `provideHttpClient(withInterceptors([authInterceptor]))`,
+`provideRouter` avec transitions de vues, Angular **Material 3** (`mat.theme()`).
 
 ```
 src/app/
-├── core/
-│   ├── auth/  (AuthService, authInterceptor (401→logout), authGuard, roleGuard)
-│   └── api/   (ApiClient de base, intercepteur Bearer, gestion erreurs)
-├── shared/    (composants UI, pipes, directives)
-└── features/
-    ├── auth/       : login/register + store NgRx { user, token, error }
-    ├── projects/   : store NgRx — actions/loadProjects, reducer, selectors,
-    │                 effects (ProjectsEffects → ProjectsService → HttpClient)
-    │                 liste + détail + formulaire (Material)
-    ├── tasks/      : EntityAdapter (tasks par projet), filtres statut
-    └── dashboard/  : statistiques (charts)
+├── core/                       ← l'infra transverse (en dehors des écrans)
+│   ├── models.ts               : types TS miroirs des DTO Java
+│   ├── auth-store.ts           : session = signal persisté (localStorage)
+│   │                             + valeurs dérivées (isLoggedIn, isAdmin)
+│   ├── auth-interceptor.ts     : ajout "Authorization: Bearer" ; sur 401 →
+│   │                             logout + redirect /login (functional interceptor)
+│   ├── auth-guards.ts          : authGuard (returnUrl), adminGuard → /forbidden
+│   └── auth-api.ts, users-api.ts : les seuls endroits qui connaissent les URLs
+└── features/                   ← un dossier par page (lazy-loadée)
+    ├── home/                   : cartes session + santé API (GET /actuator/health,
+    │                             rafraîchi toutes les 30 s, point vert/rouge)
+    ├── auth/                   : login (returnUrl), register (confirmation mdp,
+    │                             enchaînement auto register → login)
+    ├── users/                  : ADMIN — MatTable paginée côté serveur,
+    │                             recherche locale, dialog rôles, toggle enabled,
+    │                             suppression confirmée, snack-bars de feedback
+    └── forbidden/              : page 403 (redirigée par adminGuard)
 ```
 
-State NgRx par feature : `state.ts` (interface + `createEntityAdapter`), `actions.ts`,
-`reducer.ts`, `selectors.ts`, `effects.ts`. `provideStore`, `provideEffects`,
-`provideStoreDevtools` dans `app.config.ts`. Le token JWT est conservé en
-`localStorage`, l'intercepteur l'ajoute à chaque requête et déconnecte sur 401.
+**Design** : thème Material 3 via `mat.theme()` (palettes azure/blue) sur `html`,
+variables `--mat-sys-*` ; mode sombre = classe `.dark-mode` sur `<body>`
+(`color-scheme: dark`) avec bascule persistée ; layout responsive (sidenav
+`side` ≥ 960 px, `over` en dessous, grille `auto-fit` pour les cartes).
+
+**Tests** :
+- Vitest (`*.spec.ts`, jsdom, builder `@angular/build:unit-test`) : stores,
+  guards, intercepteur, clients HTTP (HttpTestingController), composants
+  (formulaire de login, tableau users, santé) — le DOM réel est vérifié ;
+- Playwright (`e2e/`) : parcours navigateur réel — login → accueil, /users
+  admin, 403 pour un USER, responsive mobile ; `/api/**` est intercepté
+  (`page.route`) pour tourner sans backend.
+
+### 4.1 Évolutions prévues (phase 2b, écrans projets/tâches) ⏳
+
+Le domaine métier pourra adopter NgRx (store/entity/effects) si la complexité
+le justifie ; l'infrastructure actuelle (signals + intercepteur + guards) reste
+valable telle quelle.
 
 ---
 
@@ -250,8 +286,9 @@ State NgRx par feature : `state.ts` (interface + `createEntityAdapter`), `action
   - `backend` : image construite par `backend/Dockerfile` (multi-stage : `maven:3.9-eclipse-temurin-21`
     → `eclipse-temurin:21-jre-alpine`), dépend de `mysql:condition: service_healthy`,
     variables d'env pour le secret JWT et la BDD, healthcheck `/actuator/health` ;
-  - `frontend` ⏳ : image construite par `frontend/Dockerfile` (build `ng build` → nginx),
-    `nginx.conf` avec fallback SPA et `proxy_pass /api → backend:8080`.
+  - `frontend` ✔ : image construite par `frontend/Dockerfile` (multi-stage
+    `node:22-alpine` → `nginx:1.27-alpine`), `nginx.conf` avec fallback SPA et
+    `proxy_pass /api → backend:8080` (une seule origine : pas de CORS en prod).
 - Réseau interne `app-net` ; seules les ports 80 (frontend) et 8080 (backend, dev) sont exposés.
 - **Secrets : Infisical** — plus aucun `.env` sur le disque. Les variables
   (`MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `MYSQL_URL`,
@@ -266,8 +303,10 @@ State NgRx par feature : `state.ts` (interface + `createEntityAdapter`), `action
 
 `.github/workflows/ci.yml` : sur `push`/`pull_request` →
 1. job **backend** : `actions/setup-java` (Temurin 21, cache Maven) + `mvn verify` ;
-2. job **frontend** ⏳ : Node 20 + `npm ci` + `ng build --configuration production` + tests headless ;
-3. job **docker** : build des images (sans push) pour valider les Dockerfiles.
+2. job **frontend** : Node 22 + `npm ci` + `npm run build` + `npm test` (Vitest) ;
+3. job **e2e** : Playwright (`npx playwright install --with-deps chromium`),
+   le config démarre `ng serve` (webServer) ; appels `/api` interceptés ;
+4. job **docker** : build des images backend + frontend (sans push) ;
 4. **Secrets** : les tests CI (`mvn verify`, profil H2) n'ont besoin d'aucun secret.
    Si un job en exige plus tard, pas de `infisical login` interactif : une *machine
    identity* en **Universal Auth** (limitée au projet et à l'environnement requis),
@@ -280,6 +319,8 @@ State NgRx par feature : `state.ts` (interface + `createEntityAdapter`), `action
 
 1. ✔ **Phase 1 (fait)** : squelette backend — `pom.xml` (dernières versions), config,
    sécurité JWT, auth, users, gestion d'erreurs, tests, Docker, CI.
-2. ⏳ Phase 2 : entités métier (`Project`, `Task`, `Comment`), migrations Flyway,
-   endpoints CRUD complets, frontend Angular 20 + NgRx.
+2. ✔ **Phase 2a (fait)** : frontend Angular 22 complet — auth (login/register),
+   admin users, Material 3 responsive, santé API, tests Vitest + Playwright, Docker.
+3. ⏳ Phase 2b : entités métier (`Project`, `Task`, `Comment`), migrations Flyway,
+   endpoints CRUD complets, écrans projets/tâches.
 3. ⏳ Phase 3 : dashboard, rafinements (refresh tokens, pagination généralisée, Docker push GHCR).
