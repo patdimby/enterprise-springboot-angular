@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: enterprise-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: enterprise_db
+      MYSQL_USER: ${MYSQL_USER:-enterprise}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-enterprise}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [app-net]
+
+  backend:
+    build: ./backend
+    container_name: enterprise-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MYSQL_USER: ${MYSQL_USER:-enterprise}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-enterprise}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-ZGV2LW9ubHktc2VjcmV0LWRvLW5vdC11c2UtaW4tcHJvZHVjdGlvbi0yNTZiaXRzIQ==}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:80}
+    ports:
+      - "8080:8080"
+    networks: [app-net]
+
+  # ---- Phase 2 : frontend Angular 20 (décommenter après `ng new frontend`) ----
+  # frontend:
+  #   build: ./frontend
+  #   container_name: enterprise-frontend
+  #   depends_on: [backend]
+  #   ports:
+  #     - "80:80"
+  #   networks: [app-net]
+
+volumes:
+  mysql_data:
+
+networks:
+  app-net:
+    driver: bridge
