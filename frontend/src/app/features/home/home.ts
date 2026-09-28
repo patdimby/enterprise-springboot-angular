@@ -8,7 +8,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { interval } from 'rxjs';
 import { startWith } from 'rxjs/operators';
 
-import { environment } from '../../../environments/environment';
 import { AuthStore } from '../../core/auth-store';
 
 /**
@@ -47,12 +46,14 @@ export class Home {
 
   /**
    * GET /actuator/health (route publique Spring Boot Actuator).
-   * environment.apiUrl vaut "/api" → on retire "/api" pour viser le root.
+   * En dev, le proxy Angular redirige /actuator vers :8080 (proxy.conf.json) ;
+   * en prod, nginx fait la même chose (nginx.conf). Une seule origine,
+   * pas de CORS.
    */
   protected checkHealth(): void {
     this.healthStatus.set('CHECKING');
     this.http
-      .get<{ status: string }>(`${environment.apiUrl.replace('/api', '')}/actuator/health`)
+      .get<{ status: string }>('/actuator/health')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {

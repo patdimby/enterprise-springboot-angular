@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("JwtService — génération et validation des JWT")
 class JwtServiceTest {
 
-    /** Secret de 64+ caractères base64 : HS256 exige une clé d'au moins 256 bits. */
+    /** Secret de test : 256+ bits (32 octets minimum, exigé par AppProperties). */
     private static final String TEST_SECRET =
             "dGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtMjU2Yml0cyEh";
 
@@ -77,7 +77,8 @@ class JwtServiceTest {
     @Test
     @DisplayName("parseToken rejette un token signé avec une autre clé")
     void parseTokenRejectsForeignSignature() {
-        // Le même algorithme, mais signé par un "attaquant" avec un autre secret.
+        // Le même algorithme, mais signé par un "attaquant" avec un autre secret
+        // (256+ bits pour passer la validation d'AppProperties).
         AppProperties impostorProps =
                 new AppProperties("c2VjcmV0LWZhbHNlLXNlY3JldC1mYWxzZS1zZWNyZXQtZmFsc2UtMjU2Yml0cw==",
                         Duration.ofMinutes(5), null);

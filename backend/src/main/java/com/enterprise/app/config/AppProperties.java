@@ -53,5 +53,14 @@ public record AppProperties(
         if (jwtExpiration.isZero() || jwtExpiration.isNegative()) {
             throw new IllegalArgumentException("app.jwt-expiration doit être strictement positif");
         }
+        // Bonne pratique cryptographique : HS256 exige une clé d'AU MOINS
+        // 256 bits (32 octets). Un secret trop court est refusé dès le
+        // démarrage plutôt que d'exposer des tokens falsifiables.
+        // (Le test profile d'AppPropertiesTest vérifie ce contrat.)
+        if (jwtSecret == null || jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalArgumentException(
+                    "app.jwt-secret doit contenir au moins 32 octets (256 bits) : "
+                            + "générez-en un avec `openssl rand -base64 64`");
+        }
     }
 }

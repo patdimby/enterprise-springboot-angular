@@ -38,14 +38,24 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
 
+    /** Taille maximale d'une page : évite qu'un appel "?size=999999"
+     *  ne demande toute la table d'un coup (protection mémoire/perf). */
+    private static final int MAX_PAGE_SIZE = 100;
+
     /**
      * Liste paginée des utilisateurs.
      *
      * @param page numéro de page (0 = première)
-     * @param size nombre d'utilisateurs par page
+     * @param size nombre d'utilisateurs par page (1 à {@value MAX_PAGE_SIZE})
      */
     @Transactional(readOnly = true)  // Lecture seule : Hibernate optimise
     public Page<UserResponse> findPage(int page, int size) {
+        // Bonne pratique "fail fast" : on refuse les paramètres absurdes
+        // AVANT de toucher la base (400 au lieu d'un comportement imprévisible).
+        if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Paramètres de pagination invalides : page >= 0 et 1 <= size <= " + MAX_PAGE_SIZE);
+        }
         // PageRequest décrit "page n° X, taille Y, trié par id croissant".
         // .map(this::toResponse) transforme chaque User (entité) en
         // UserResponse (DTO) — on n'expose JAMAIS l'entité au client.

@@ -77,6 +77,8 @@ export class Register {
           this.router.navigateByUrl('/home');
         },
         error: (err: HttpErrorResponse) => {
+          // reset complet de l'état (cf. commentaire dans login.ts) :
+          // sans ça, le spinner reste actif après une erreur.
           this.loading.set(false);
           if (err.status === 409) {
             this.error.set('Cet email est déjà utilisé.');

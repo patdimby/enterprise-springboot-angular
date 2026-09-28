@@ -1,5 +1,6 @@
 package com.enterprise.app.common;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
  * "detail":"Utilisateur introuvable : id=5","timestamp":"..."}}</p>
  */
 @RestControllerAdvice
+@Slf4j  // Lombok : champ "log" généré (utilisé pour tracer les erreurs 500)
 public class GlobalExceptionHandler {
 
     /** Préfixe des URLs "type" du format RFC 7807 (documentation des erreurs). */
@@ -92,11 +94,17 @@ public class GlobalExceptionHandler {
 
     /**
      * TOUTE AUTRE exception non prévue → 500 générique.
-     * On ne renvoie JAMAIS le message technique au client (il pourrait
-     * révéler des détails internes) ; il reste dans les logs du serveur.
+     * Deux règles d'or :
+     * <ul>
+     *   <li>le client ne reçoit JAMAIS le message technique (il pourrait
+     *       révéler des détails internes : SQL, chemins, versions...) ;</li>
+     *   <li>le serveur, lui, LOGUE l'erreur complète avec la pile d'appels —
+     *       sans ça, un bug en production serait indébuggable.</li>
+     * </ul>
      */
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpected(Exception ex) {
+        log.error("Erreur interne non prévue", ex);  // Pile complète dans les logs serveur
         return base(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Erreur interne du serveur");
     }
 

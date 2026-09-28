@@ -72,10 +72,15 @@ export class Login {
     this.authApi.login(this.form.getRawValue()).subscribe({
       next: session => {
         this.auth.setSession(session);
+        // Bonne pratique : plus aucun message d'erreur ni spinner résiduel
+        // — on navigue et le composant est détruit par le routeur.
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/home';
-        this.router.navigateByUrl(returnUrl);
+        // Petit garde-fou : on refuse un returnUrl externe (open redirect).
+        this.router.navigateByUrl(returnUrl.startsWith('/') ? returnUrl : '/home');
       },
       error: (err: HttpErrorResponse) => {
+        // reset complet de l'état : sans ça, un second essai resterait
+        // bloqué avec le spinner actif (bug classique des signaux).
         this.loading.set(false);
         this.error.set(this.humanMessage(err));
       },

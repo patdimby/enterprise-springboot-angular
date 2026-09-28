@@ -1,4 +1,4 @@
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
@@ -12,7 +12,6 @@ import { UsersApi } from './users-api';
  */
 describe('UsersApi', () => {
   let api: UsersApi;
-  let http: HttpClient;
   let controller: HttpTestingController;
 
   beforeEach(async () => {
@@ -20,7 +19,6 @@ describe('UsersApi', () => {
       providers: [provideHttpClient(withInterceptors([])), provideHttpClientTesting()],
     }).compileComponents();
     api = TestBed.inject(UsersApi);
-    http = TestBed.inject(HttpClient);
     controller = TestBed.inject(HttpTestingController);
   });
 
